@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.sh text eol=lf
+*.template text eol=lf
+*.locations text eol=lf
+Dockerfile text eol=lf
+*.png binary
+*.jpg binary
+*.bat text eol=crlf

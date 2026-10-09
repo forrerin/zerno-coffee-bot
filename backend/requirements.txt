@@ -1,0 +1,11 @@
+aiogram>=3.15,<4
+fastapi>=0.115
+uvicorn[standard]>=0.32
+sqlalchemy[asyncio]>=2.0.36
+asyncpg>=0.30
+redis>=5.2
+pydantic-settings>=2.6
+python-multipart>=0.0.18
+apscheduler>=3.11,<4
+anthropic>=0.75
+sentry-sdk>=2.19

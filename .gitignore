@@ -1,0 +1,29 @@
+# секреты
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+backend/dev.db
+backend/media/
+backend/logs/
+logs/
+
+# Node
+node_modules/
+# webapp/dist лежит в репозитории: так для запуска не нужен Node.js
+
+# Инфраструктура
+certbot/
+backups/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+backend/local.db

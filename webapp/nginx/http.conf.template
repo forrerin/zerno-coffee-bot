@@ -1,0 +1,13 @@
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    client_max_body_size 6m;
+
+    # проверка домена для Let's Encrypt
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    include /etc/nginx/zerno/app.locations;
+}
