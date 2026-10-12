@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#0B0B0C" />
+<meta name="robots" content="noindex" />
+<title>BREW coffee &amp; more</title>
+<script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #0B0B0C; color: #fff; font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; }
+  body { display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  .box { max-width: 320px; }
+  .bean { width: 56px; height: 56px; margin: 0 auto 20px; animation: breathe 1.6s cubic-bezier(.37,0,.63,1) infinite; }
+  @keyframes breathe { 50% { transform: scale(1.08); } }
+  h1 { font-size: 20px; line-height: 26px; font-weight: 600; margin: 0 0 8px; }
+  p { font-size: 14px; line-height: 20px; color: rgba(255,255,255,.64); margin: 0; }
+  button { margin-top: 20px; height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: #FFD60A; color: #111; font: 600 15px/1 inherit; font-family: inherit; display: none; }
+  .err .bean { animation: none; opacity: .5; }
+  .err button { display: inline-block; }
+  @media (prefers-reduced-motion: reduce) { .bean { animation: none; } }
+</style>
+</head>
+<body>
+<div class="box" id="box">
+  <svg class="bean" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.5c7.5 0 11.5 6.6 11.5 13.5S22.5 29.5 16 29.5 4.5 23 4.5 16 8.5 2.5 16 2.5z" fill="#FFD60A"/><path d="M16.8 5.5c-3.6 3.4-3.8 7-1.4 10.4 2.4 3.4 2.2 7-1.2 10.6" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"/></svg>
+  <h1 id="title">Подключаемся к кофейне…</h1>
+  <p id="text">Секунду</p>
+  <button id="retry" type="button">Попробовать снова</button>
+</div>
+<script>
+/* Постоянная страница кнопки «Меню»: находит текущий адрес бота (бесплатный туннель меняет его)
+   и переходит туда, сохраняя параметры и initData Telegram (#hash). */
+(function () {
+  var wa = window.Telegram && window.Telegram.WebApp;
+  try { wa.setHeaderColor("#0B0B0C"); wa.setBackgroundColor("#0B0B0C"); wa.expand(); } catch (e) {}
+  var HOSTS = ["lhr.life", "trycloudflare.com"];
+  var params = new URLSearchParams(location.search);
+  var topic = params.get("t") || "";
+  var box = document.getElementById("box");
+  function fail(title, text) {
+    box.className = "box err";
+    document.getElementById("title").textContent = title;
+    document.getElementById("text").textContent = text;
+    try { wa.ready(); } catch (e) {}
+  }
+  function allowed(u) {
+    try {
+      var x = new URL(u.trim());
+      if (x.protocol !== "https:") return null;
+      for (var i = 0; i < HOSTS.length; i++) if (x.hostname === HOSTS[i] || x.hostname.slice(-HOSTS[i].length - 1) === "." + HOSTS[i]) return x.origin;
+    } catch (e) {}
+    return null;
+  }
+  function latest() {
+    return fetch("https://ntfy.sh/" + topic + "/json?poll=1&since=12h", { cache: "no-store" })
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        var lines = t.trim().split("\n").reverse();
+        for (var i = 0; i < lines.length; i++) {
+          try { var ev = JSON.parse(lines[i]); if (ev.event === "message") return allowed(ev.message); } catch (e) {}
+        }
+        return null;
+      });
+  }
+  function alive(origin) {
+    var ctl = new AbortController();
+    setTimeout(function () { ctl.abort(); }, 7000);
+    return fetch(origin + "/api/health", { mode: "no-cors", cache: "no-store", signal: ctl.signal }).then(function () { return true; }, function () { return false; });
+  }
+  var attempt = 0;
+  function go() {
+    box.className = "box";
+    document.getElementById("title").textContent = "Подключаемся к кофейне…";
+    document.getElementById("text").textContent = "Секунду";
+    if (!/^brew-[0-9a-f]{24}$/.test(topic)) return fail("Ссылка устарела", "Откройте Mini App кнопкой «Меню» в чате с ботом.");
+    latest().then(function (origin) {
+      if (!origin) throw 0;
+      return alive(origin).then(function (ok) {
+        if (!ok) throw 0;
+        location.replace(origin + "/" + location.search + location.hash);
+      });
+    }).catch(function () {
+      attempt++;
+      if (attempt < 4) return setTimeout(go, 2500);
+      attempt = 0;
+      fail("Кофейня сейчас закрыта", "Бот не запущен. Откройте программу BREW Bot на компьютере и дождитесь «Всё работает!», затем попробуйте снова.");
+    });
+  }
+  document.getElementById("retry").onclick = go;
+  go();
+})();
+</script>
+</body>
+</html>
